@@ -15,6 +15,9 @@ from datetime import datetime
 
 
 def parse_status_file(sf):
+    """ Pass in the path to a $SUBJECTS_DIR/$SUB/scripts/recon-all-status.log
+    file and this returns a list recon-all step, time (s) tuples
+    """
     with open(sf) as f:
         raw = f.read().splitlines()
 
