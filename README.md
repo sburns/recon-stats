@@ -1,4 +1,4 @@
 recon-all_stats
 ===============
 
-a toy repo to parse recon-all run stats
+Python package to parse stats from recon-all

@@ -1,4 +1,5 @@
 *.py[co]
+hack.py
 
 # Packages
 *.egg
