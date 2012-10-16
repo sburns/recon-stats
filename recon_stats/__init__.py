@@ -11,4 +11,4 @@ __author__ = 'Scott Burns <scott.s.burns@vanderbilt.edu>'
 __copyright__ = 'Copyright 2012 Vanderbilt University. All Rights Reserved'
 __version__ = '0.0'
 
-from .io import Parser
+from .io import Parser, Measure
