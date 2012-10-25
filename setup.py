@@ -20,7 +20,7 @@ if __name__ == '__main__':
         author='Scott Burns',
         author_email='scott.s.burns@gmail.com',
         description='recon-stats is a simple package to parse stats'
-                    ' files from recon-all',
+                    ' files from Freesurfer\recon-all',
         license='BSD (3-clause)',
         url='http://github.com/sburns/recon-stats',
         version=__version__,

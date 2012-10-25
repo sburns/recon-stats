@@ -15,10 +15,10 @@ class Measure(object):
     """Basic class for storing statistical measures"""
     def __init__(self, structure, measure, value, units, descrip=None,
             short_name=None):
-        self.structure = structure
-        self.measure = measure
+        self.structure = structure.lower()
+        self.measure = measure.lower()
         self.value = float(value)
-        self.units = units
+        self.units = units.lower()
         self.descrip = descrip
         self.short_name = short_name
 
@@ -62,25 +62,88 @@ class Parser(object):
                 measures.append(m)
             return measures
 
-        def _inner_aseg(raw):
-            common = _common(raw)
-            return common
+        def _get_columns(raw):
+            tablecol = filter(lambda x: x.startswith('# TableCol'), raw)
+            ncols = int(filter(lambda x: x.startswith('# NTableCols'), raw)[0].split('# NTableCols')[1])
+            columns = []
+            for i in range(1, ncols + 1):
+                i_table_rows = filter(lambda x: ' %d ' % i in x, tablecol)
+                tup = (
+                        i - 1,
+                        filter(lambda x: 'ColHeader' in x, i_table_rows)[0].split(' ColHeader ')[-1].strip(),
+                        filter(lambda x: 'FieldName' in x, i_table_rows)[0].split(' FieldName ')[-1].strip(),
+                        filter(lambda x: 'Units' in x, i_table_rows)[0].split(' Units ')[-1].strip(),
+                    )
+                columns.append(tup)
+            return columns
 
-        def _inner_aparc(raw):
-            common = _common(raw)
-            return common
+        def _grab(columns, col_name, ss_row):
+            i, name, field, units = filter(lambda x: x[1] == col_name, columns)[0]
+            return ss_row[i], field, units
 
-        def _inner_wmparc(raw):
+        def _aseg(raw):
             common = _common(raw)
-            return common
+            columns = _get_columns(raw)
+            rows = filter(lambda x: not x.startswith('#'), raw)
+            measures = []
+            for row in rows:
+                ss_row = row.strip().split()
+                measure_cols = ['Volume_mm3', 'normMean', 'normStdDev', 'normMin', 'normMax', 'normRange']
+                measures.extend(_parse_row(ss_row, columns, measure_cols))
+            return common + measures
+
+        def _parse_row(ss_row, columns, columns_to_measure, hemi=None):
+            struct, _, _ = _grab(columns, 'StructName', ss_row)
+            struct = struct.replace('-', '_')
+            measures = []
+            for col in columns_to_measure:
+                value, descrip, units = _grab(columns, col, ss_row)
+                m = Measure(struct, col, value, units, descrip=descrip)
+                if hemi:
+                    m.structure = '%s_%s' % (hemi, m.structure)
+                    # m.descrip = '%s %s' % (hemi, m.descrip)
+                measures.append(m)
+            return measures
+
+        def _hemi(raw):
+            return filter(lambda x: x.startswith('# hemi'), raw)[0].split('hemi')[1].strip()
+
+        def _aparc(raw):
+            common = _common(raw)
+            # update these measures with hemisphere
+            hemi = _hemi(raw)
+            for meas in common:
+                meas.structure = hemi + meas.structure
+            rows = filter(lambda x: not x.startswith('#'), raw)
+            columns = _get_columns(raw)
+            measures = []
+            for row in rows:
+                ss_row = row.strip().split()
+                measure_cols = ['NumVert', 'SurfArea', 'GrayVol', 'ThickAvg',
+                    'ThickStd', 'MeanCurv', 'GausCurv', 'FoldInd', 'CurvInd']
+                measures.extend(_parse_row(ss_row, columns, measure_cols, hemi=hemi))
+            return common + measures
+
+        def _a2009s(raw):
+            # Don't need to do common
+            hemi = _hemi(raw)
+            rows = filter(lambda x: not x.startswith('#'), raw)
+            columns = _get_columns(raw)
+            measures = []
+            for row in rows:
+                ss_row = row.strip().split()
+                measure_cols = ['NumVert', 'SurfArea', 'GrayVol', 'ThickAvg',
+                    'ThickStd', 'MeanCurv', 'GausCurv', 'FoldInd', 'CurvInd']
+                measures.extend(_parse_row(ss_row, columns, measure_cols, hemi=hemi))
+            return measures
 
         key_parsers = {
-            'aseg.stats': _inner_aseg,
-            'lh.aparc.stats': _inner_aparc,
-            'rh.aparc.stats': _inner_aparc,
-            'lh.aparc.a2009s.stats': _inner_aparc,
-            'rh.aparc.a2009s.stats': _inner_aparc,
-            'wmparc.stats': _inner_wmparc,
+            'aseg.stats': _aseg,
+            'lh.aparc.stats': _aparc,
+            'rh.aparc.stats': _aparc,
+            'lh.aparc.a2009s.stats': _a2009s,
+            'rh.aparc.a2009s.stats': _a2009s,
+            'wmparc.stats': _aseg,
         }
         return key_parsers[self.type]
 
