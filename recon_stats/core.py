@@ -33,4 +33,12 @@ class Subject(object):
                 if Parser.can_parse(fullname):
                     p = Parser(fullname)
                     measures.extend(p.measures)
-        return measures
+        self.measures = measures
+
+    def upload_dict(self):
+        if not hasattr(self, 'measures'):
+            self.get_measures()
+        data = {}
+        for m in self.measures:
+            data[m.name()] = m.value_as_str()
+        return data
