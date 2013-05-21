@@ -27,7 +27,7 @@ class Measure(object):
             (self.structure, self.measure, self.units, self.value)
 
     def name(self):
-        return 'recon_%s_%s' % (self.measure, self.structure)
+        return 'recon_%s_%s' % (self.structure, self.measure)
 
     def label(self):
         return '%s %s(%s)' % (self.structure, self.descrip, self.units)
