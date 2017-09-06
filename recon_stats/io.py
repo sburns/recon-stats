@@ -52,7 +52,7 @@ class Parser(object):
     def __init__(self, fname):
         self.type = basename(fname)
         with open(fname) as f:
-            self.raw = map(lambda x: x.strip(), f.read().splitlines())
+            self.raw = list(map(lambda x: x.strip(), f.read().splitlines()))
         self.parser_fxn = self.get_parser()
         self.measures = self.parse()
 
@@ -61,39 +61,41 @@ class Parser(object):
 
     def get_parser(self):
         def _common(raw):
-            measure_lines = filter(lambda x: x.startswith('# Measure'), raw)
+            measure_lines = list(filter(lambda x: x.startswith('# Measure'), raw))
             measures = []
             for ml in measure_lines:
-                splat = ml.replace('# Measure', '').split(',')
-                pieces = map(lambda x: x.strip(), splat)
+                ml = ml.replace('# Measure', '')
+                ml = ml.replace('CortexVol Total cortical gray matter volume', 'CortexVol, Total cortical gray matter volume') # Fix an issue in lh.aparc.stats
+                splat = ml.split(',')
+                pieces = list(map(lambda x: x.strip(), splat))
                 str, meas, descrip, val, units = pieces
                 m = Measure(str, meas, val, units, descrip=descrip)
                 measures.append(m)
             return measures
 
         def _get_columns(raw):
-            tablecol = filter(lambda x: x.startswith('# TableCol'), raw)
-            ncols = int(filter(lambda x: x.startswith('# NTableCols'), raw)[0].split('# NTableCols')[1])
+            tablecol = list(filter(lambda x: x.startswith('# TableCol'), raw))
+            ncols = int(list(filter(lambda x: x.startswith('# NTableCols'), raw))[0].split('# NTableCols')[1])
             columns = []
             for i in range(1, ncols + 1):
-                i_table_rows = filter(lambda x: ' %d ' % i in x, tablecol)
+                i_table_rows = list(filter(lambda x: ' %d ' % i in x, tablecol))
                 tup = (
                         i - 1,
-                        filter(lambda x: 'ColHeader' in x, i_table_rows)[0].split(' ColHeader ')[-1].strip(),
-                        filter(lambda x: 'FieldName' in x, i_table_rows)[0].split(' FieldName ')[-1].strip(),
-                        filter(lambda x: 'Units' in x, i_table_rows)[0].split(' Units ')[-1].strip(),
+                        list(filter(lambda x: 'ColHeader' in x, i_table_rows))[0].split(' ColHeader ')[-1].strip(),
+                        list(filter(lambda x: 'FieldName' in x, i_table_rows))[0].split(' FieldName ')[-1].strip(),
+                        list(filter(lambda x: 'Units' in x, i_table_rows))[0].split(' Units ')[-1].strip(),
                     )
                 columns.append(tup)
             return columns
 
         def _grab(columns, col_name, ss_row):
-            i, name, field, units = filter(lambda x: x[1] == col_name, columns)[0]
+            i, name, field, units = list(filter(lambda x: x[1] == col_name, columns))[0]
             return ss_row[i], field, units
 
         def _aseg(raw):
             common = _common(raw)
             columns = _get_columns(raw)
-            rows = filter(lambda x: not x.startswith('#'), raw)
+            rows = list(filter(lambda x: not x.startswith('#'), raw))
             measures = []
             for row in rows:
                 ss_row = row.strip().split()
@@ -115,7 +117,7 @@ class Parser(object):
             return measures
 
         def _hemi(raw):
-            return filter(lambda x: x.startswith('# hemi'), raw)[0].split('hemi')[1].strip()
+            return list(filter(lambda x: x.startswith('# hemi'), raw))[0].split('hemi')[1].strip()
 
         def _aparc(raw):
             common = _common(raw)
@@ -123,7 +125,7 @@ class Parser(object):
             hemi = _hemi(raw)
             for meas in common:
                 meas.structure = hemi + meas.structure
-            rows = filter(lambda x: not x.startswith('#'), raw)
+            rows = list(filter(lambda x: not x.startswith('#'), raw))
             columns = _get_columns(raw)
             measures = []
             for row in rows:
@@ -136,7 +138,7 @@ class Parser(object):
         def _a2009s(raw):
             # Don't need to do common
             hemi = _hemi(raw)
-            rows = filter(lambda x: not x.startswith('#'), raw)
+            rows = list(filter(lambda x: not x.startswith('#'), raw))
             columns = _get_columns(raw)
             measures = []
             for row in rows:

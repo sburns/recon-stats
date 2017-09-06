@@ -23,7 +23,7 @@ class Subject(object):
         except KeyError:
             raise ValueError("SUBJECTS_DIR is not set")
         if not isdir(self.stat_dir):
-            raise ValueError("This subject doesn't have a 'stats' dir")
+            raise ValueError(f"This subject doesn't have a 'stats' dir at {self.stat_dir}")
 
     def get_measures(self):
         measures = []
