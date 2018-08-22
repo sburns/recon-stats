@@ -45,6 +45,6 @@ if __name__ == '__main__':
                 'Operating System :: Unix',
                 'Operating System :: MacOS',
                 'Programming Language :: Python',
-                'Programming Language :: Python :: 2.7',
+                'Programming Language :: Python :: 3.6',
                 'Topic :: Scientific/Engineering',)
         )
